@@ -1,43 +1,22 @@
-import * as React from "react";
-import { rawSchema } from "graphql-api/schema-base";
-
+import { MuiThemeProvider } from '@material-ui/core';
+import { RenderFunction } from '@storybook/react';
+import { InMemoryCache, NormalizedCacheObject } from 'apollo-cache-inmemory';
+import ApolloClient from 'apollo-client';
+import { SchemaLink } from 'apollo-link-schema';
+import { GraphQLResolveInfo } from 'graphql';
+import { SchemaMap } from 'graphql-api';
+import { rawSchema } from 'graphql-api/schema-base';
 import {
-  makeExecutableSchema,
   addMockFunctionsToSchema,
-  MockList
-} from "graphql-tools";
+  makeExecutableSchema,
+  MockList,
+  mergeSchemas
+} from 'graphql-tools';
+import * as React from 'react';
+import { ApolloProvider } from 'react-apollo';
+import { MemoryRouter, MemoryRouterProps } from 'react-router';
 
-export { MockList } from "graphql-tools";
-
-import { ApolloProvider } from "react-apollo";
-
-import { GraphQLResolveInfo } from "graphql";
-import * as State from "client/state/index";
-import { Reducer } from "redux";
-import { RenderFunction } from "@storybook/react";
-import { MemoryRouter } from "react-router";
-import { SchemaMap } from "graphql-api";
-import { buildCore } from "client";
-import ApolloClient from "apollo-client";
-import { NormalizedCacheObject, InMemoryCache } from "apollo-cache-inmemory";
-import { SchemaLink } from "apollo-link-schema";
-import { Provider } from "react-redux";
-
-// type DeepPartial<T> = T extends object //T extends any[] ? Array<DeepPartial<T[number]>> :
-//   ? {
-//       [P in keyof T]?: T[P] extends Array<infer U>
-//         ? Array<DeepPartial<U>>
-//         : DeepPartial<T[P]>
-//     }
-//   : T;
-
-// type x = DeepPartial<{
-//   foo: number;
-//   bar: {
-//     map: Map<number, string>;
-//     y: string;
-//   }[];
-// }>;
+export { MockList } from 'graphql-tools';
 
 type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 type MockDefinitions<T> = {
@@ -53,10 +32,22 @@ type MockDefinitions<T> = {
 export function mockClient(
   mocks: MockDefinitions<SchemaMap>
 ): ApolloClient<NormalizedCacheObject> {
-  const exSchema = makeExecutableSchema({ typeDefs: rawSchema });
+  const serverSchema = makeExecutableSchema({ typeDefs: rawSchema });
   addMockFunctionsToSchema({
-    schema: exSchema,
+    schema: serverSchema,
     mocks: mocks as any
+  });
+
+  const clientSchema = makeExecutableSchema({
+    typeDefs: require('client/graphql/schema.graphql')
+  });
+  addMockFunctionsToSchema({
+    schema: clientSchema,
+    mocks: mocks as any
+  });
+
+  const exSchema = mergeSchemas({
+    schemas: [serverSchema, clientSchema]
   });
 
   const client = new ApolloClient({
@@ -71,18 +62,13 @@ export function mockClient(
 export interface MockProviderOpts {
   /** Definition of graphql mocks for mock client */
   mocks?: MockDefinitions<SchemaMap>;
-  /** Reducer function */
-  reducer?: Reducer<State.Type>;
-
-  /** A function to initialize the state. Passed the default state returned by the reducer. */
-  initState?: (state: State.Type) => State.Type;
+  memoryRouterProps?: MemoryRouterProps;
 }
 
 /** Create a fully initialized ApolloProvider with a mocked out graphql connection and arbitrary initial state. */
 export function mockProvider(opts?: MockProviderOpts) {
   if (!opts) opts = {};
 
-  let { initState } = opts;
   const apollo = mockClient(opts.mocks || {});
 
   let maybeJest: typeof jest | undefined = undefined;
@@ -91,27 +77,21 @@ export function mockProvider(opts?: MockProviderOpts) {
   } catch {}
 
   const mockFn = maybeJest ? maybeJest.fn : (x: any) => x;
-  const { reducer, store } = buildCore({
-    apollo,
-    decorateReducer: mockFn,
-    initState,
-    routing: undefined // disable routing
-  });
-
   return class extends React.Component<{}, {}> {
-    static displayName = "MockProvider";
-    static store = store;
-    static reducer = reducer;
+    static apolloClient = apollo;
+    static displayName = 'MockProvider';
 
     render() {
       return (
-        <Provider store={store}>
-          <MemoryRouter>
-            <ApolloProvider client={apollo}>
-              {this.props.children}
-            </ApolloProvider>
-          </MemoryRouter>
-        </Provider>
+        // <MuiThemeProvider theme={PlacementTheme}>
+        //   <TranslationProvider value={ENGLISH}>
+        //     <ThemeProvider theme={PlacementTheme}>
+        <MemoryRouter>
+          <ApolloProvider client={apollo}>{this.props.children}</ApolloProvider>
+        </MemoryRouter>
+        //  </ThemeProvider>
+        //   </TranslationProvider>
+        // </MuiThemeProvider>
       );
     }
   };

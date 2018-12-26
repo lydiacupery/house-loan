@@ -1,5 +1,11 @@
 type Query {
   test: String
+  allPayments: [Payment!]
+}
+
+type Payment {
+  date: String!
+  amount: Float!
 }
 
 # type Mutation {

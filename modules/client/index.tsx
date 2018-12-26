@@ -1,72 +1,69 @@
-import * as React from "react";
-import { routerMiddleware, routerReducer } from "react-router-redux";
-import { Route } from "react-router-dom";
+import * as React from 'react';
+import { Route } from 'react-router-dom';
 
-import { History } from "history";
-import { AppShell } from "client/components/app";
-import { HomePage } from "client/pages/home";
-import { Switch } from "react-router";
-import { ApolloClient } from "apollo-client";
-import { applyMiddleware, createStore, compose } from "redux";
-import { rootReducer, Reducer } from "./reducers";
-import { rootSaga } from "./sagas";
-import createSagaMiddleware from "redux-saga";
-import * as State from "./state";
-import compact from "lodash-es/compact";
+import { History } from 'history';
+import { AppShell } from 'client/components/app';
+import { HomePage } from 'client/pages/home';
+import { Switch } from 'react-router';
+import { ApolloClient } from 'apollo-client';
+import { applyMiddleware, createStore, compose } from 'redux';
+import { rootSaga } from './sagas';
+import compact from 'lodash-es/compact';
+import { PaymentsPage } from './pages/payments';
 
 /** Build the core app store with middlewares and reducer. Used to bootstrap the app to run and to test. */
-export function buildCore(args: {
-  apollo: ApolloClient<any>;
-  routing?: { history: History };
-  decorateReducer?: (reducer: Reducer) => Reducer;
-  initState?: (state: State.Type) => State.Type;
-}) {
-  const { routing, decorateReducer, initState } = args;
+// export function buildCore(args: {
+//   apollo: ApolloClient<any>;
+//   routing?: { history: History };
+//   decorateReducer?: (reducer: Reducer) => Reducer;
+//   initState?: (state: State.Type) => State.Type;
+// }) {
+//   const { routing, decorateReducer, initState } = args;
 
-  const sagaMiddleware = createSagaMiddleware();
-  const composeEnhancers =
-    ((window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ as typeof compose) ||
-    compose;
+//   const sagaMiddleware = createSagaMiddleware();
+//   const composeEnhancers =
+//     ((window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ as typeof compose) ||
+//     compose;
 
-  const middlewares = compact([
-    sagaMiddleware,
+//   const middlewares = compact([
+//     sagaMiddleware,
 
-    // Support disabling routing in tests/storybook stories
-    routing ? routerMiddleware(routing.history) : undefined
-  ]);
+//     // Support disabling routing in tests/storybook stories
+//     routing ? routerMiddleware(routing.history) : undefined
+//   ]);
 
-  const enhancer = composeEnhancers(applyMiddleware(...middlewares));
+//   const enhancer = composeEnhancers(applyMiddleware(...middlewares));
 
-  function enhancedReducer(s: any, e: any): State.Type {
-    let state = rootReducer(s, e);
-    return {
-      ...state,
-      router: routerReducer(s && s.router, e)
-    };
-  }
+//   function enhancedReducer(s: any, e: any): State.Type {
+//     let state = rootReducer(s, e);
+//     return {
+//       ...state,
+//       router: routerReducer(s && s.router, e)
+//     };
+//   }
 
-  const reducer = decorateReducer
-    ? decorateReducer(enhancedReducer)
-    : enhancedReducer;
+//   const reducer = decorateReducer
+//     ? decorateReducer(enhancedReducer)
+//     : enhancedReducer;
 
-  let state = reducer(undefined as any, { type: "@@INIT" } as any);
-  if (initState) state = initState(state);
+//   let state = reducer(undefined as any, { type: '@@INIT' } as any);
+//   if (initState) state = initState(state);
 
-  const store = createStore(reducer, state, enhancer);
+//   const store = createStore(reducer, state, enhancer);
 
-  sagaMiddleware.run(rootSaga);
+//   sagaMiddleware.run(rootSaga);
 
-  return {
-    store,
-    reducer: enhancedReducer
-  };
-}
+//   return {
+//     store,
+//     reducer: enhancedReducer
+//   };
+// }
 
 export function App(props: {}) {
   return (
     <AppShell>
       <Switch>
-        <Route exact path="/" component={HomePage} />
+        <Route exact path="/" component={() => <div>HELLO</div> as any} />
       </Switch>
     </AppShell>
   );

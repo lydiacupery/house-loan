@@ -1,6 +1,9 @@
-const path = require("path");
-const loaders = require("../webpack/loaders");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const path = require('path');
+const loaders = require('../webpack/loaders');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+var HappyPack = require('happypack');
+var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const os = require('os');
 
 // Export a function. Accept the base config as the only param.
 module.exports = (storybookBaseConfig, configType) => {
@@ -13,27 +16,41 @@ module.exports = (storybookBaseConfig, configType) => {
     {
       test: /\.s?css$/,
       loaders: [
-        "style-loader",
-        "css-loader",
+        'style-loader',
+        'css-loader',
         {
-          loader: "sass-loader",
+          loader: 'sass-loader',
           options: {
-            includePaths: [path.resolve(__dirname, "../modules")]
+            includePaths: [path.resolve(__dirname, '../modules')]
           }
         }
       ],
-      include: path.resolve(__dirname, "../")
+      include: path.resolve(__dirname, '../')
     },
     loaders.mjs,
-    loaders.typescript,
+    loaders.clientSideTypeScript,
     loaders.graphql
   );
   storybookBaseConfig.module.rules.concat(loaders.allImagesAndFontsArray);
 
-  storybookBaseConfig.resolve.extensions.push(".ts", ".tsx");
+  storybookBaseConfig.resolve.extensions.push('.ts', '.tsx');
   storybookBaseConfig.resolve.modules.unshift(
-    path.resolve(__dirname, "../modules")
+    path.resolve(__dirname, '../modules')
   );
+
+  // storybookBaseConfig.plugins.push(
+  //   new HappyPack({
+  //     id: "ts",
+  //     threads: Math.max(1, os.cpus().length / 2 - 1),
+  //     loaders: [
+  //       {
+  //         path: "ts-loader",
+  //         query: { happyPackMode: true, configFile: "tsconfig.client.json" }
+  //       }
+  //     ]
+  //   }),
+  //   new ForkTsCheckerWebpackPlugin({ checkSyntacticErrors: true })
+  // );
 
   // Return the altered config
   return storybookBaseConfig;

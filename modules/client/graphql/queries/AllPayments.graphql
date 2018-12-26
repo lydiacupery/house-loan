@@ -1,0 +1,6 @@
+query AllPaymentsQuery {
+  allPayments {
+    date
+    amount
+  }
+}

@@ -1,7 +1,7 @@
-import * as React from "react";
-import { Link } from "react-router-dom";
+import * as React from 'react';
+import { Link } from 'react-router-dom';
 
-require("./styles.scss");
+// require("./styles.scss");
 export function AppHeader() {
   return (
     <div className="app-header">

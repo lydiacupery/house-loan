@@ -1,6 +1,6 @@
-import * as React from "react";
+import * as React from 'react';
 
-require("./styles.scss");
+// require("./styles.scss");
 
 export interface HomePageUIProps {}
 
